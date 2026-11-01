@@ -1,0 +1,28 @@
+name: daily2odds
+services:
+  web:
+    build: .
+    image: daily2odds:local
+    container_name: daily2odds-web
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - daily2odds-data:/data
+    networks:
+      edge:
+        aliases: [daily2odds-web]
+    mem_limit: 768m
+    cpus: 1.0
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs: [/tmp:size=128m]
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: '3'}
+networks:
+  edge:
+    external: true
+    name: truearena-edge
+volumes:
+  daily2odds-data:

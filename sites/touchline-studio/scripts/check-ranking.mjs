@@ -1,0 +1,32 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import {rankForecasts,likelihood,combineDisplayedPrices} from '../lib/forecast-view.ts';
+const data=JSON.parse(fs.readFileSync('data/forecasts.json','utf8'));
+const prices=JSON.parse(fs.readFileSync('data/prices.json','utf8'));
+const matches=data.matches.map(m=>({...m,prices:{...m.prices,...prices.matches[m.id]}}));
+const base={league:'all',market:'all',start:'2026-10-29',end:'2026-11-02',minimum:0,maximum:100,onePerMatch:true,pricedOnly:false,query:''};
+const example=matches.flatMap(m=>Object.values(m.prices)).find(p=>p.capturedAt&&p.kickoff);
+assert.ok(example,'At least one genuine timestamped quote must be in the cache');
+const now=Date.parse(example.capturedAt)+1000;
+const rows=rankForecasts(matches,base,now);assert.equal(rows.length,100);assert.equal(rankForecasts(matches,{...base,maximum:20},now).length,20);assert.equal(new Set(rows.map(r=>r.match.id)).size,100);assert.ok(rows.every((r,i)=>i===0||rows[i-1].probability>=r.probability));
+const league=rankForecasts(matches,{...base,league:'E0'},now);assert.ok(league.length>0&&league.every(r=>r.match.league==='E0'));
+const priced=rankForecasts(matches,{...base,market:'1x2',pricedOnly:true},now);assert.ok(priced.length>0);assert.ok(priced.every(r=>r.priceStatus==='fresh'&&r.price.odds>1));
+assert.equal(rankForecasts(matches,{...base,pricedOnly:true},now+7200000).length,0);
+assert.ok(rankForecasts(matches,{...base,minimum:90},now).every(r=>r.probability>=.9));
+assert.equal(rankForecasts(matches,{...base,query:'nonexistent team'},now).length,0);
+assert.equal(likelihood(.8),'higher likelihood');assert.equal(likelihood(.6),'moderate likelihood');assert.equal(likelihood(.59),'lower likelihood');
+assert.ok(priced.every(r=>Date.parse(r.price.sourceUpdatedAt)<=Date.parse(r.price.capturedAt)));
+console.log(`PASS: top-100 probability order, unique fixtures, league filter, threshold, missing prices, stale-price exclusion, likelihood bands; ${priced.length} priced EPL fixtures.`);
+
+const first={...rows[0],id:'arith-a',price:{odds:1.5,bookmaker:'one'},priceStatus:'stale'};
+const second={...rows[1],id:'arith-b',price:{odds:2,bookmaker:'two'},priceStatus:'stale'};
+assert.equal(combineDisplayedPrices([first,second],now).combinedOdds,3);
+assert.equal(combineDisplayedPrices([first,second],now).count,2);
+assert.equal(combineDisplayedPrices([first,second],now).bookmakers.length,2);
+assert.equal(combineDisplayedPrices([first,second],now).staleCount,2);
+assert.equal(combineDisplayedPrices([],now).combinedOdds,0);
+assert.throws(()=>combineDisplayedPrices([first,first],now),/one outcome/);
+assert.throws(()=>combineDisplayedPrices([{...first,price:undefined}],now),/genuine displayed/);
+console.log('PASS: displayed-price product, empty selections, mixed bookmakers, stale warnings, missing-price and duplicate-fixture guards.');
+
+assert.ok(rankForecasts(matches,{...base,availableOnly:true},now).every(row=>row.price));

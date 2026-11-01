@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import {suggestTeams,teamScore} from '../lib/team-search.ts';
+for(const [query,name] of [['arsnal','Arsenal'],['man utd','Manchester United'],['psg','Paris Saint Germain'],['atletico','Atlético Madrid']])assert.equal(suggestTeams([name],query)[0],name);
+assert.equal(suggestTeams(['Arsenal','Chelsea'],'chel')[0],'Chelsea');
+assert.equal(teamScore('Arsenal','zzzzzzzz'),0);
+assert.deepEqual(suggestTeams(['Arsenal','Arsenal'],''),['Arsenal']);
+console.log('Team autocomplete regression checks passed');
+assert.equal(suggestTeams(['Man City','Man United'],'Manchester').length,2);
+assert.equal(teamScore('Man City','Manchester City'),100);
+assert.equal(teamScore('Man United','Manchester United'),100);
+assert.equal(teamScore('Manchester United','Man Utd'),100);

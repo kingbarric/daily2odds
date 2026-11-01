@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+import {compareHistoryRows} from '../lib/history-order.ts';
+import {paypalContributionLink} from '../lib/support-link.ts';
+const rows=[{score:null,match:{date:'2026-11-01'},probability:.9},{score:'0–0',match:{date:'2026-10-30'},probability:.8},{score:'2–1',match:{date:'2026-10-31'},probability:.85}];
+assert.deepEqual(rows.sort(compareHistoryRows).map(r=>r.score),['2–1','0–0',null]);
+assert.equal(paypalContributionLink('https://paypal.me/dailyodds','5','USD'),'https://paypal.me/dailyodds/5USD');
+assert.equal(paypalContributionLink('https://paypal.me/dailyodds','3.50','GBP'),'https://paypal.me/dailyodds/3.5GBP');
+for(const amount of ['','-5','NaN','0','1.234'])assert.equal(paypalContributionLink('https://paypal.me/dailyodds',amount,'USD'),'');
+assert.equal(paypalContributionLink('https://example.com/user','5','USD'),'');
+console.log('Finished-first ordering and editable PayPal amounts passed');

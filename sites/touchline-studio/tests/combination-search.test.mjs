@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import {searchCombinations} from '../lib/combination-search.ts';
+const row=(id,odds,probability)=>({id,match:{id},price:{odds},probability});
+const rows=[row('a',1.5,.9),row('b',1.5,.8),row('c',1.5,.85),row('d',1.48,.8),row('a',2,.5)];
+const results=searchCombinations(rows,4,5);
+assert.ok(results.length);
+assert.equal(results[0].odds,4.995);
+assert.equal(new Set(results[0].rows.map(r=>r.match.id)).size,4);
+assert.ok(Math.abs(results[0].probability-.9*.8*.85*.8)<1e-12);
+assert.deepEqual(searchCombinations(rows,4,2),[]);
+assert.deepEqual(searchCombinations(rows,1,5),[]);
+assert.deepEqual(searchCombinations([row('x',NaN,.9),row('y',2,NaN)],2,5),[]);
+console.log('Combination regression checks passed');

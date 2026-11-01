@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+import {isUpcomingFixture} from '../lib/upcoming-fixtures.ts';
+const now=Date.parse('2026-11-01T17:30:00Z');
+assert.equal(isUpcomingFixture({kickoff:'2026-11-01T17:30:00Z'},now),false);
+assert.equal(isUpcomingFixture({kickoff:'2026-11-01T17:29:59Z'},now),false);
+assert.equal(isUpcomingFixture({kickoff:'2026-11-01T17:30:01Z'},now),true);
+assert.equal(isUpcomingFixture({kickoff:'2026-11-01T18:30:00+01:00'},now),false);
+assert.equal(isUpcomingFixture({},now),false);
+assert.equal(isUpcomingFixture({kickoff:'invalid'},now),false);
+console.log('Past, exact kickoff, timezone and unknown kickoff regression checks passed');
