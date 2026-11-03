@@ -1,12 +1,12 @@
 export type Price={odds:number;bookmaker:string;capturedAt?:string;sourceUpdatedAt?:string;kickoff?:string};
-export type Match={id:string;date:string;league:string;home:string;away:string;asOf:string;kickoff?:string;modelSource?:string;teamNewsStatus?:string;teamContext?:Record<string,{team:string;historicalMatches:number;recent:{date:string;opponent:string;scored:number;conceded:number;result:string}[]}>;homeGoals:number;awayGoals:number;probabilities:Record<string,number>;prices:Record<string,Price>};
+export type Match={id:string;date:string;league:string;home:string;away:string;asOf:string;kickoff?:string;status?:string;homeScore?:number;awayScore?:number;modelSource?:string;teamNewsStatus?:string;teamContext?:Record<string,{team:string;historicalMatches:number;recent:{date:string;opponent:string;scored:number;conceded:number;result:string}[]}>;homeGoals:number;awayGoals:number;probabilities:Record<string,number>;prices:Record<string,Price>};
 export type ForecastRow={id:string;match:Match;market:string;selection:string;probability:number;price?:Price;priceStatus:'fresh'|'stale'|'unavailable';likelihood:string};
 export type ViewFilters={league:string;market:string;start:string;end:string;minimum:number;maximum:number;onePerMatch:boolean;pricedOnly:boolean;availableOnly?:boolean;upcomingOnly?:boolean;query:string};
 export function likelihood(p:number){return p>=.8?'higher likelihood':p>=.6?'moderate likelihood':'lower likelihood'}
 export function rankForecasts(matches:Match[],filters:ViewFilters,now=Date.now()):ForecastRow[]{
  let rows:ForecastRow[]=[];
  for(const match of matches){
-  if(filters.upcomingOnly&&match.kickoff&&Date.parse(match.kickoff)<=now)continue;
+  if(filters.upcomingOnly&&((match.status&&match.status!=='scheduled')||!match.kickoff||!(Date.parse(match.kickoff)>now)))continue;
   if(filters.league!=='all'&&match.league!==filters.league)continue;
   if(match.date<filters.start||match.date>filters.end)continue;
   if(!`${match.home} ${match.away}`.toLowerCase().includes(filters.query.toLowerCase()))continue;

@@ -23,6 +23,7 @@ def league_scope():
 # Verified against the provider's per-competition metadata on 29 October 2026.
 ESPN_IDS={'3927':'D2','3921':'SP2','3931':'I2','3926':'F2','735':'SC0','3940':'SC1','3941':'SC2','3901':'B1','3946':'T1','3955':'G1'}
 TEAM_ALIASES={
+ 'St. Pauli':'St Pauli','Saint-Étienne':'St Etienne',"Queen's Park":'Queens Park',
  '1. FC Nürnberg':'Nurnberg','Dynamo Dresden':'Dresden','Karlsruher SC':'Karlsruhe','TSV Eintracht Braunschweig':'Braunschweig',
  'CD Sabadell':'Sabadell','FC Andorra':'Andorra','RC Celta Fortuna':'Celta B','Real Sociedad II':'Sociedad B','Real Oviedo':'Oviedo','Sporting Gijón':'Sp Gijon',
  'Clermont Foot':'Clermont','Dijon FCO':'Dijon','Pau':'Pau FC','Red Star FC 93':'Red Star','Rodez Aveyron':'Rodez','Stade Laval':'Laval',

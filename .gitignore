@@ -34,3 +34,9 @@ node_modules/
 .DS_Store
 
 !.env.example
+
+# Public static inputs required by the production adapter. Runtime payload seeds stay ignored.
+!sites/touchline-studio/seed/
+sites/touchline-studio/seed/*
+!sites/touchline-studio/seed/scoreboard-config.json
+!sites/touchline-studio/seed/archived-prices.json

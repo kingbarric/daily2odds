@@ -19,3 +19,40 @@ Verification: HTTPS root/terms/support/forecasts/history; static CSS and JS; cac
 ## Registered-domain redirect (1 November 2026)
 
 `daily2odds.com` and `www.daily2odds.com` issue HTTPS 301 redirects to `https://daily2odds.playhuud.com{uri}`, preserving paths and query strings. Porkbun apex ALIAS points to `daily2odds.playhuud.com`; explicit `www` CNAME points to `daily2odds.com`. Existing email MX/TXT and wildcard records were preserved. Caddy backup: `~/truearena/infra/Caddyfile.prod.before-daily2odds-domain-20261101T215524Z`. Both valid HTTPS redirects were verified, including `/terms?source=check`; the original Daily2Odds and PlayHuud roots still returned 200. No application rebuild or data changes were needed.
+
+## Continuous results and matchday board (3 November 2026)
+
+`ops/match-feed.mjs` polls public ESPN competition scoreboards every two minutes
+on the VPS, independently of the owner's Mac. Queries cover known fixtures that
+are due to start or have unresolved results in the previous seven days; three
+requests run at a time with ten-second timeouts. Exact league, ordered canonical
+teams and kickoff must match. Only explicit completed status with verified
+regulation scores settles predictions. Extra-time/penalty games need first- and
+second-period scores; unavailable results remain open.
+
+Public score updates and original forecast records persist atomically in
+`/data/public-feed.json` on the existing volume. Subscriber storage is separate
+and untouched. Forecast/history imports update the in-memory public feeds
+immediately, preserving the earliest saved pre-kickoff probabilities. The Node
+adapter serves cached JSON directly for `/api/forecasts` and `/api/history`,
+avoiding repeated large-response transfers through Miniflare/workerd. Browsers
+share one poll per endpoint per minute, pause background-tab polling, refresh
+when refocused and retain the last good payload on failures.
+
+The matchday board has Today, Upcoming and History views. Today's final scores
+stay visible until midnight Europe/London; older matches remain in History.
+New published forecasts appear without a page reload. Training/new forecast
+generation still follows the existing owner-side nightly workflow; the result
+poller does not create model predictions or spend odds-provider credits.
+
+`/healthz` now probes the worker/database with a bounded timeout. A thirty-second
+watchdog exits the service after two failed probes so Docker's existing restart
+policy can recover it. It also recycles the service above 650 MiB cgroup usage,
+below the unchanged 768 MiB hard cap. This mitigates the observed worker memory
+failure; it does not claim to fix the upstream allocator.
+
+When packaging releases, include the public `seed/scoreboard-config.json` and
+`seed/archived-prices.json` as well as the three existing public payload seeds.
+No provider credentials are needed for the scoreboard poller. Use a stopped,
+consistent volume backup before replacing the running service; preserve the old
+image tag for rollback.

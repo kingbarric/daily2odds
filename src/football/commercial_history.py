@@ -7,6 +7,11 @@ from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[2]
 
+def instant(value):
+    parsed=datetime.fromisoformat(value.replace('Z','+00:00'))
+    if parsed.tzinfo is None:raise ValueError('Forecast timestamps need an explicit timezone')
+    return parsed.astimezone(timezone.utc)
+
 def outcome(key,h,a):
     market,selection=key.split(':')
     if market=='1x2':return selection==('home' if h>a else 'away' if a>h else 'draw')
@@ -21,16 +26,16 @@ def build_history(root=ROOT):
     if db.exists():
         with sqlite3.connect(f'file:{db}?mode=ro',uri=True) as conn:
             for ident,kickoff,h,a in conn.execute("SELECT provider_id,kickoff_utc,hg,ag FROM fixtures WHERE status='finished'"):
-                results[(ident,kickoff)]=(h,a)
+                results[(ident,instant(kickoff))]=(h,a)
     # Preserve the earliest actually saved pre-kickoff forecast for each match.
     for path in sorted((root/'reports/football_nightly').glob('*/forecasts.json')):
         data=json.loads(path.read_text())
         for m in data['matches']:
-            if not m.get('kickoff') or m['asOf']>=m['kickoff']:continue
+            if not m.get('kickoff') or instant(m['asOf'])>=instant(m['kickoff']):continue
             ident=m['id'];prior=records.get(ident)
-            if prior and prior['asOf']<=m['asOf']:continue
-            score=results.get((ident,m['kickoff']))
-            records[ident]=dict(id=ident,date=m['date'],home=m['home'],away=m['away'],league=m['league'],asOf=m['asOf'],kind='Saved pre-match forecast',rows=[dict(market=k,probability=p,score=f'{score[0]}–{score[1]}' if score else None,correct=outcome(k,*score) if score else None) for k,p in m['probabilities'].items()])
+            if prior and instant(prior['asOf'])<=instant(m['asOf']):continue
+            score=results.get((ident,instant(m['kickoff'])))
+            records[ident]=dict(id=ident,date=m['date'],kickoff=m['kickoff'],home=m['home'],away=m['away'],league=m['league'],asOf=m['asOf'],kind='Saved pre-match forecast',rows=[dict(market=k,probability=p,score=f'{score[0]}–{score[1]}' if score else None,correct=outcome(k,*score) if score else None) for k,p in m['probabilities'].items()])
     # Existing result-blind replay is explicitly separate from genuine forward history.
     replay=root/'reports/football_blind_replay_20261028/selected_markets_with_actuals.csv'
     if replay.exists():
