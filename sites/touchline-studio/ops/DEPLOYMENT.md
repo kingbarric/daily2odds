@@ -56,3 +56,17 @@ When packaging releases, include the public `seed/scoreboard-config.json` and
 No provider credentials are needed for the scoreboard poller. Use a stopped,
 consistent volume backup before replacing the running service; preserve the old
 image tag for rollback.
+
+## Layout pass (3 November 2026, 22:45 London)
+
+One content grid (1200px plus a 32/24/20px gutter) now sets the left and right
+edge of the header, hero, every section and the footer; a single heading scale
+and card style replace the earlier per-section values. The results board counts
+each game's top pick, because all 14 outcomes per game always settle exactly 7
+matched. Only `dist/` changed; `ops/` and `seed/` were identical to the running
+release. Release tarballs exclude `dist/server/.wrangler` (local preview
+temporary files).
+
+Rollback image: `daily2odds:before-design-20261103T224544Z` (new image tagged
+`daily2odds:design-20261103`). Stopped-volume backup:
+`~/daily2odds/backups/data-20261103T224544Z.tar.gz`; source backup alongside.
